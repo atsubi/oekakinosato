@@ -1,0 +1,255 @@
+<html>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <head>
+    <title>お絵かき</title>
+  </head>
+  <style type="text/css">
+
+    body {
+      margin: 20px;
+    }
+
+    canvas {
+      text-align: center;
+      border: 5px solid #ccc;
+    }
+
+    #send {
+      font-size: 120%;
+      width: 180px;
+      height: 50px;
+    }
+
+    #clear {
+      font-size: 120%;
+      width: 130px;
+      height: 50px;
+    }
+
+    #paint ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    
+    #paint li {
+      display:inline-block;
+    }
+
+    #color ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    
+    #color li {
+      cursor: pointer;
+      cursor: hand;
+      display: block;
+      border: 1px solid #000;
+      width: 20px;
+      height: 20px;
+    }
+
+  </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script type="text/javascript">
+
+    var p_flag = true; // 描画可能フラグ
+
+    $(function() {
+
+      <!-- 初期設定 -->
+      var offset = 5;
+      var startX;
+      var startY;
+      var flag = false;  
+      var canvas = document.getElementById("mycanvas");
+      if ( canvas.getContext ) {
+        var context = canvas.getContext('2d');
+        context.lineWidth = 2;                          
+      }
+
+      <!-- マウスクリック時 -->
+      $('canvas').mousedown( function(e) {
+        if ( p_flag ) {
+           flag = true;
+           startX = e.pageX - $(this).offset().left - offset;
+           startY = e.pageY - $(this).offset().top - offset;
+           return false; // for chrome
+        }
+      });
+
+      <!-- マウスを動かした時 -->
+      $('canvas').mousemove( function(e) {
+        if ( flag ) {
+          var endX = e.pageX - $('canvas').offset().left - offset;
+          var endY = e.pageY - $('canvas').offset().top - offset;
+          context.beginPath();  
+          context.moveTo( startX, startY );
+          context.lineTo( endX, endY );  
+          context.stroke();
+          startX = endX;
+          startY = endY;
+        }
+      });
+
+      $('canvas').on('mouseup', function() {
+        flag = false;
+      });
+
+      $('canvas').on('mouseleave', function() {
+        flag = false;
+      });
+      
+      $('#color li').click( function() {
+        context.strokeStyle = $(this).css('background-color');
+        if( context.strokeStyle == "#ffffff" ) {
+          context.lineWidth = 10;
+        } else {
+          context.lineWidth = 2;
+        }
+      });
+
+      $('#clear').click( function(e) {
+        e.preventDefault();
+        context.clearRect( 0, 0, $('canvas').width(), $('canvas').height() );
+      });
+      
+      $('#send').click( function(e) {
+        sendImage();
+      });
+
+    });
+
+    <!-- 描画不能フラグを建てる -->
+    function endPaint() {
+
+       p_flag = false;
+
+       /////////// なんかcanvasにひと工夫 ////////////
+
+    }
+
+      
+    <!-- XMLHttpRequest オブジェクトを取得するためのユーザ定義関数 -->
+    function getXHR() {
+      var req;
+      try {
+        req = new XMLHttpRequest();
+      } catch(e) {
+        try {
+          req = new ActiveXObject("Msxml2.XMLHTTP");
+        } catch(e) {
+          req = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+      }
+      return req;
+    }
+
+    <!-- カウントの初期値設定 + カウントスタート -->
+    var count = 30;
+    timerID = setInterval('countDown()', 1000);
+
+    <!-- カウントをプリント-->
+    function printCount() {
+      var rest = document.getElementById("rest_time");
+      rest.innerHTML = "残り" + count + "秒";
+    }
+
+    <!-- カウントダウン更新 -->
+    function countDown() {
+      count--;
+      printCount();
+      if( count == 0 ) // カウントダウン終了
+      {
+         // 画像送信処理+描画禁止処理 
+         sendImage();
+	   
+      }
+    }
+
+    <!-- 画像送信処理+描画禁止処理 -->
+    function sendImage() {
+
+      var req = getXHR();
+      var canvas = document.getElementById("mycanvas");   
+
+      // 画像データをbase64に変換
+      var base64 = canvas.toDataURL('image/png');
+      imgdata = base64.replace('data:image/png;base64,','').split("+").join("-").split("/").join("_");
+      // 通信状態の変化に応じたアクションの定義
+      req.onreadystatechange = function() {
+        var err = document.getElementById("log");
+        if( req.readyState == 4 ) {  // 通信完了時
+           if( req.status == 200 ) {   // 通信成功
+             err.innerHTML = req.responseText;   // ruby内のエラー出力
+           } else {                    // 通信失敗
+             err.innerHTML = req.responseText;   // ruby内のエラー出力
+           }
+        } else {
+             
+        }
+      
+      }
+      
+      // 画像データ送信
+      req.open("POST", "http://v157-7-113-64.z1d13.static.cnode.jp/receive_image.rb", true);
+      req.setRequestHeader("Content-type", 'image/png');
+      req.send( imgdata ); 
+
+      // 画像データ送信後canvasに描画出来ないようにする
+      endPaint();
+      
+      // カウント停止
+      printCount();
+      clearInterval( timerID );
+
+    }   
+
+  </script>
+
+  <body>
+
+
+    <!-- 外枠 -->
+    <div style="padding: 10px; margin-bottom: 10px; border: 1px solid #333333;">
+
+    <!-- 出題者１のお絵描きスペース --> 
+      <ul id="paint">
+
+	<li>
+	  <ul id="color">
+	    <li style="background-color:#000"></li>
+	    <li style="background-color:#f00"></li>
+	    <li style="background-color:#0f0"></li>
+	    <li style="background-color:#00f"></li>
+	    <li style="background-color:#fff"><img src="eraser.png" width="20" height="20"></li>
+	  </ul>
+	</li>
+
+	<li>
+	  <canvas id="mycanvas" width="550" height="400">
+	    お使いのブラウザではお絵描きを行うことが出来ません．
+	  </canvas>
+	</li>
+
+      </ul>
+    <!-- ここまでが出題者１のお絵描きスペース-->
+    </div>
+
+    <div id="button">
+      <input type="button" id="send" value="画像送信" />
+      <input type="button" id="clear" value="消す" />
+    </div>
+
+    <!-- 残り時間表示 -->
+    <div id="rest_time">残り30秒</div>
+    
+    <!-- エラー -->
+    <div id="log"></div>
+
+  </body>
+
+
+</html>

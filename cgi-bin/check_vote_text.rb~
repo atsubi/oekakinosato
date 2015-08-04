@@ -1,0 +1,15 @@
+#!/root/.rbenv/shims/ruby
+# -*- coding: utf-8 -*-
+
+require 'cgi'
+
+cgi = CGI.new
+vote_text = File.read()
+
+  cgi.out{ "#{vote_text}" }
+rescue
+  cgi.out{ "0" }
+end
+
+
+

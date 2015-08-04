@@ -1,0 +1,83 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS">
+    <title>画像表示サンプル</title>
+  </head>
+  <style type="text/css">
+    canvas {
+      text-align: center;
+      border: 5px solid #ccc;
+    }
+  </style>
+  <script type="text/javascript">
+
+    <!-- 画像を表示する -->
+    function getImage() {
+       var req = getXHR();
+       req.responseType = "blob"
+       id = document.getElementById("id");
+
+       <!-- 通信処理 -->
+       req.onreadystatechange = function() {
+          if( req.readyState == 4 ) {
+              if( req.status == 200 ) {
+                 var oURL = URL.createObjectURL(req.response);
+                 var canvas = document.getElementById("mycanvas");
+                 var context = canvas.getContext("2d");
+                 var img = new Image();
+
+                 // 画像が読み込まれるとcanvasに描画する
+                 img.onload = function() {
+                    try{
+                       context.drawImage(img, 0, 0);
+                       alert('success');
+                    } catch (exp) {
+                       alert('error');
+                    }
+                 }
+                 img.src = oURL;
+
+              } 
+              else {
+                 id.innerHTML = req.status;
+              }
+          }
+        }
+
+       req.open("GET", "/cgi-bin/load_image.rb", true);
+       req.send( null );
+     
+    }
+
+    function getXHR() {
+      var req;
+      try {
+         req = new XMLHttpRequest();
+      } catch( e ) {
+         try {
+            req = new ActiveXObject("Msxm12.XMLHTTP");
+         } catch( e ) {
+            req = new ActiveXObject("Microsoft.XMLHTTP");
+         }
+      }
+
+      return req;
+    }
+
+
+  </script>
+  <body>
+    <canvas id="mycanvas" width="550" height="400">
+      お使いのブラウザではお絵描きを行うことが出来ません．
+    </canvas>
+
+    <div>
+      <button type="button" name="画像表示" onclick="getImage()">
+	画像表示
+      </button>
+    </div>
+    <div id="id">status</div>
+  </body>
+
+</html>
+

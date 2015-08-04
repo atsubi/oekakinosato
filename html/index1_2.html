@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Hello</title>
+    <style type="text/css">
+      body {
+          margin: 20px;
+      }
+
+      canvas {
+          text-align: center;
+          border: 5px solid #ccc;
+      }
+
+      #send {
+          font-size: 120%;
+          width: 180px;
+          height: 50px;
+      }
+
+      #clear {
+          font-size: 120%;
+          width: 130px;
+          height: 50px;
+      }
+
+      #paint ul {
+          margin: 0;
+          padding: 0;
+          list-style: none;
+      }
+    
+      #paint li {
+          display:inline-block;
+      }
+
+      #color ul {
+          margin: 0;
+          padding: 0;
+          list-style: none;
+      }
+    
+      #color li {
+          cursor: pointer;
+          cursor: hand;
+          display: block;
+          border: 1px solid #000;
+          width: 20px;
+          height: 20px;
+      }
+    </style>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script type="text/javascript">
+      
+      var p_flag = true; // 描画可能フラグ
+
+          $(function() {
+
+      <!-- 初期設定 -->
+      var offset = 5;
+      var startX;
+      var startY;
+      var flag = false;  
+      var canvas = document.getElementById("mycanvas");
+      if ( canvas.getContext ) {
+        var context = canvas.getContext('2d');
+        context.lineWidth = 2;                          
+      }
+
+      <!-- マウスクリック時 -->
+      $('canvas').mousedown( function(e) {
+        if ( p_flag ) {
+           flag = true;
+           startX = e.pageX - $(this).offset().left - offset;
+           startY = e.pageY - $(this).offset().top - offset;
+           return false; // for chrome
+        }
+      });
+
+      <!-- マウスを動かした時 -->
+      $('canvas').mousemove( function(e) {
+        if ( flag ) {
+          var endX = e.pageX - $('canvas').offset().left - offset;
+          var endY = e.pageY - $('canvas').offset().top - offset;
+          context.beginPath();  
+          context.moveTo( startX, startY );
+          context.lineTo( endX, endY );  
+          context.stroke();
+          startX = endX;
+          startY = endY;
+        }
+      });
+
+      $('canvas').on('mouseup', function() {
+        flag = false;
+      });
+
+      $('canvas').on('mouseleave', function() {
+        flag = false;
+      });
+      
+      $('#color li').click( function() {
+        context.strokeStyle = $(this).css('background-color');
+        if( context.strokeStyle == "#ffffff" ) {
+          context.lineWidth = 10;
+        } else {
+          context.lineWidth = 2;
+        }
+      });
+
+      $('#clear').click( function(e) {
+        e.preventDefault();
+        context.clearRect( 0, 0, $('canvas').width(), $('canvas').height() );
+      });
+      
+      $('#send').click( function(e) {
+        sendImage();
+      });
+
+    });
+ 
+      // XMLHttpRequest オブジェクトを取得するためのユーザ定義関数
+      function getXHR() {
+        var req;
+        try {
+          req = new XMLHttpRequest();
+        } catch(e) {
+          try {
+            req = new ActiveXObject("Msxml2.XMLHTTP");
+          } catch(e) {
+            req = new ActiveXObject("Microsoft.XMLHTTP");
+          }
+        }
+        return req;
+      }
+
+      // 送信ボタンを押した場合に処理される
+      function asyncSend() {
+        req = getXHR();
+        // 非同期通信の処理
+        req.onreadystatechange = function() {
+          var result = document.getElementById("result");
+
+          if( req.readyState == 4 ) {  // 通信完了時
+              if( req.status == 200 ) {   // 通信成功
+                result.innerHTML = req.responseText; 
+              } else {                    // 通信失敗
+                result.innerHTML = req.status;
+              }
+          } else {
+            result.innerHTML = "通信中・・・"
+          }
+        }
+        
+        // サーバとの非同期通信を開始
+        req.open("GET", "/cgi-bin/hello1_2.rb?name=" +
+          encodeURIComponent(document.your_name.name.value), true);
+        req.send(null);
+      }
+
+      // 削除を押した時の動作
+      function clearText() {
+          document.getElementById("result").innerHTML="";
+      }
+
+    </script>
+  </head>
+  <body>
+    <h1>連想クイズゲーム</h1>
+    <h3>非同期通信のテスト</h3>
+    クライアントからGETで送られたデータをサーバ側で非同期に処理をする。<br>
+    送信ボタンを押すとサーバー側のhello.rbが実行される。<br>
+    下の線以下をサーバサイドのスクリプトで書き換える感じになるかな？<br>
+    <a href="index2.html">バージョン2</a>
+    <hr>
+    <form name="your_name">
+      <label>名前：
+	<input type="text" name="name" size="15"></label>
+      <input type="button" name="submit" value="送信" onclick="asyncSend()">
+      <input type="button" name="delete" value="削除" onclick="clearText()">
+    </form>
+    <div id="result"></div>
+  </body>
+</html>
+
+	  

@@ -1,0 +1,468 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS">
+    <title>お絵描きの里</title>
+    <style>
+      body{
+        background: url(Pencle2.png);
+        font-family: Meiryo;
+      }
+
+      #titleframe{
+
+      background: #004400;
+      width: 1100px;
+      padding: 30px;
+      text-align: center;
+      margin: auto auto;
+      }
+
+      #title {
+        width: 380px;
+      background: #93FFAB;
+        padding: 5px;
+        text-align: center;
+        margin: 5px auto;
+      zoom: 200%;
+      }
+
+      #questionframe{
+        
+        background: #00BB00;
+        width: 830px;
+        height: 70px;
+        padding: 20px;
+        text-align: center;
+      }
+
+      #question {
+        background: #ffffff;
+        width: 200px; 
+        text-align: center;
+        margin: 5px 25px;
+        zoom: 150%;
+        float: left;
+      }
+      
+      #vote_area{
+        background: #AAAAAA;
+        width: 200px;
+        height: 42px;
+        text-align: center;
+        float: left;
+        margin: auto 50px;
+        zoom: 150%;
+      }
+
+      #center_container {
+        margin: 0 auto;
+      }
+      
+
+      #paint_container_frame{
+
+      width: 1200px;
+      height: 400px;
+      background: #a0522d;
+      padding: 20px 0px; 
+
+      }
+
+      #paint_container {
+        width: 1150px;
+        height: 350px;
+        background: #00ff00;
+        margin: 25px 25px;
+      }
+
+      .paint{
+        float: left;
+
+      }
+
+      #paint_p1 {
+        background: #dddd00;
+          margin: 25px 25px;
+   
+      }
+
+      #paint_p2 {
+        background: #dd00dd;
+          margin: 25px 15px;
+      
+      }
+
+      #paint_p3 {
+        background: #00dddd;
+          margin: 25px 25px;
+
+      }
+
+      #answer_cotainer{
+        background: #ffffff;
+        height: 1000px;
+        width: 1000px;
+      }
+
+      #vote_function{
+
+        width: 200px;
+        height: 30px;
+        margin: auto 10px;
+        text-align: center;
+        zoom: 300%;
+      }
+
+      p.answer{zoom: 250%;}
+
+      canvas {
+      width: 320px;
+      height: 270px;
+        margin: 0;
+        border: 3px solid #ccc;
+      }
+
+      paint ul {
+
+      }
+        
+    </style>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script type="text/javascript">
+
+      var my_id = "";     // 自身のプレイヤ番号
+      var answer_id = ""; // 回答者のプレイヤ番号
+      var image_id = 1;
+      var timerID = setInterval('checkAnswertext()', 1000);
+      var timerID = setInterval('checkvotetext()', 1000);
+      
+      $(function() {
+         getAnswerNumber(); // 回答者のプレイヤ番号を取り出す。
+         getMyNumber();     // 自身のプレイヤ番号を取り出す。
+
+      });
+      
+      function getAnswerNumber() {
+
+         var req = getXHR();
+         req.onreadystatechange = function() {
+            if( req.readyState == 4 ) {  // 通信完了時
+                if( req.status == 200 ) {   // 通信成功
+                   answer_id = req.responseText;
+                } else {                    // 通信失敗
+
+                }
+            } else {
+
+            }
+         }
+
+         // サーバとの同期通信を開始
+         req.open( "GET", "/cgi-bin/answer.rb", false );
+         req.send( null );
+
+      }
+
+      
+      <!-- 画像を表示する -->
+      function getImage( num ) {
+         var req = getXHR();
+         req.responseType = "blob"
+
+         <!-- 通信処理 -->
+         req.onreadystatechange = function() {
+            if( req.readyState == 4 ) {
+              if( req.status == 200 ) {
+                 var oURL = URL.createObjectURL(req.response);
+                 var canvas = document.getElementById("mycanvas"+image_id.toString(10));
+                 var context = canvas.getContext("2d");
+                 var img = new Image();
+
+                 // 画像が読み込まれるとcanvasに描画する
+                 img.onload = function() {
+                    try{
+                       context.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    } catch (exp) {
+
+                    }
+                 }
+                 img.src = oURL;
+                 image_id++;
+              } 
+              else {
+
+              }
+            }
+         }
+         req.open("GET", "/cgi-bin/load_image.rb?id=" + num, true);
+         req.send( null );
+      }
+
+
+      <!-- -->
+      function getMyNumber() {
+
+         var req = getXHR();
+         var ans_textbox = document.getElementById("ans_textbox");
+         var ans_box = document.getElementById("Abox")
+         var question = document.getElementById("question");
+
+         req.onreadystatechange = function() {
+
+            if( req.readyState == 4 ) {  // 通信完了時
+                if( req.status == 200 ) {   // 通信成功
+                   my_id = req.responseText;
+                   if ( answer_id == my_id ) { // 回答者
+                      question.innerHTML = "答えを入力して「回答する」ボタンを押してください";
+                      vote_function.innerHTML = "";
+                   }
+                   else {
+                      getOdai(); 
+                      ans_box.value = "回答者入力中です. ";
+                      ans_textbox.innerHTML = "";
+                   }
+                   
+                   // 画像を出力する
+                   for ( var i=1; i != 5; i++ ) {
+                      if ( i.toString(10) != answer_id ) {
+                          getImage( i.toString(10) );
+      	              }
+                   }
+
+                } else {                    // 通信失敗
+
+                }
+            } else {
+ 
+            }
+         }
+
+         // サーバとの同期通信を開始
+         req.open("GET","/cgi-bin/player_number.rb", false);
+         req.send(null);
+
+      }
+
+      function getOdai() {
+
+         var req = getXHR();
+         var question = document.getElementById("question");
+
+         req.onreadystatechange = function() {
+
+          if( req.readyState == 4 ) {  // 通信完了時
+              if( req.status == 200 ) {   // 通信成功
+              question.innerHTML = req.responseText;
+              } else {                    // 通信失敗
+                question.innerHTML = req.status;
+              }
+          } else {
+            question.innerHTML = "通信中・・・";
+          }
+        }
+        
+        // サーバとの非同期通信を開始
+        req.open( "GET", "/cgi-bin/odai.rb", false );
+        req.send( null );
+
+      }
+
+
+      <!-- XMLHttpRequest オブジェクトを取得するためのユーザ定義関数 -->
+      function getXHR() {
+         var req;
+         try {
+           req = new XMLHttpRequest();
+         } catch(e) {
+           try {
+              req = new ActiveXObject("Msxml2.XMLHTTP");
+           } catch(e) {
+              req = new ActiveXObject("Microsoft.XMLHTTP");
+           }
+         }
+         return req;
+      }
+
+
+      function checkAnswertext() {
+
+         var req = getXHR();
+         var ans_box = document.getElementById("Abox")
+
+         req.onreadystatechange = function() {
+
+          if( req.readyState == 4 ) {  // 通信完了時
+              if( req.status == 200 ) {   // 通信成功
+                if( req.responseText != "" ) {
+                   ans_box.value = req.responseText;
+   	           clearInterval( timerID );
+                }
+              } else {                    // 通信失敗
+
+              }
+          } else {
+
+          }
+        }
+}
+
+      function checkvotetext() {
+
+         var vreq = getXHR();
+         vreq.onreadystatechange = function() {
+
+          if( vreq.readyState == 4 ) {  // 通信完了時
+              if( vreq.status == 200 ) {   // 通信成功
+
+                var vt_number = parseInt(vreq.responseText);
+                if(vt_number==0){vote_area.innerHTML="待機中";} else {
+                switch(vt_number-30){
+                   case 0:
+                      vote_area.innerHTML = "×××";
+                      break;
+                   case 1:
+                      vote_area.innerHTML = "○××";
+                      break;
+                   case 2:
+                      vote_area.innerHTML = "○○×";
+                      break;
+                   case 3:
+                      vote_area.innerHTML = "○○○";
+                      break;
+                }
+                clearInterval( timerID );
+              }
+            }
+          }
+              
+        }
+  
+
+        
+        // サーバとの非同期通信を開始
+        vreq.open( "GET", "/cgi-bin/check_vote_text.rb", false );
+        vreq.send( null );
+      
+      }
+
+      function Send_Answer(){
+           var xhr=getXHR();
+           xhr.onreadystatechange = function(){
+           switch(xhr.readyState){
+              case 4:
+                 var ansbox = document.getElementById("Abox");
+                 var ans_textbox = document.getElementById("ans_textbox");
+                 getOdai();
+                 var resp=xhr.responseText;
+                 ansbox.value = resp;
+                 ans_textbox.innerHTML = "";
+                 <!--  document.answerAREA.Abox.value=resp; -->
+                 break;
+           }
+         }
+
+
+         var stext = document.answerAREA.input.value;
+         var url = "/cgi-bin/ans.rb";
+         xhr.open("GET",url+"?answer=" +
+		 encodeURIComponent( stext ),
+		 false);
+         xhr.send(null);
+      }
+
+
+<!-- countで正解なら1, 不正解なら0を取得している -->
+      function vote(count){
+        var vtreq = getXHR();
+        vtreq.onreadystatechange = function(){
+        if(vtreq.readyState==4){
+                var vt_number = parseInt(vtreq.responseText);
+                if(vt_number==0){vote_area.innerHTML="待機中";} else {
+                switch(vt_number-30){
+                   case 0:
+                      vote_area.innerHTML = "×××";
+                      break;
+                   case 1:
+                      vote_area.innerHTML = "○××";
+                      break;
+                   case 2:
+                      vote_area.innerHTML = "○○×";
+                      break;
+                   case 3:
+                      vote_area.innerHTML = "○○○";
+                      break;
+                }
+              }
+             }
+            }
+        
+        var url = "/cgi-bin/vote_test.rb";
+        vtreq.open("GET", url+"?ct="+count,true);
+        vtreq.send(null);
+      }
+
+    </script>
+    
+  </head>
+  
+  <body>
+    <center>
+      <div id = "titleframe">
+	<div id = "title">
+      <img id="tree1" src="tree04.gif" width="80px" height="70px" align="left"> 
+      <img id="tree2" src="tree04.gif" width="80px" height="70px" align="right">
+      <h1>お絵描きの里</h1>
+    </div>
+      </div>
+    </center>
+    <h2>
+      <center>
+	<div id="questionframe">
+	  <div id="question">
+	  </div>
+	  <div id="vote_area">
+	  </div>
+	</div>
+      </center>
+    </h2>
+    <center>    
+      <div id = "center_container">
+	<div id = "paint_container_frame">
+          <div id = "paint_container">
+	    <div id = "paint_p1" class = "paint" width="320px" height="270px">
+	      <canvas id="mycanvas1">
+	    </div>
+	    <div id = "paint_p2" class = "paint" width="320px" height="270px">
+	      <canvas id="mycanvas2">
+	    </div>
+	    <div id = "paint_p3" class = "paint" width="320px" height="270px">
+	      <canvas id="mycanvas3">
+	    </div>
+	  </div>
+	</div>
+	
+	<div id="answer_container">
+          <form name="answerAREA">
+            <p class=answer>
+	      <INPUT type="text" size=16 style="text-align:center;font-size:xx-large;" id="Abox" disabled="disabled">
+              <br>
+	      <div id="vote_function">
+		<INPUT type="button" onClick="vote(1)" value="正解">
+		&nbsp;&nbsp;&nbsp; <!-- 空白文字-->
+		<INPUT type="button" onClick="vote(0)" value="不正解">
+	      </div>
+              <div id="ans_textbox">
+		<INPUT type="text" size=10 style="font-size:medium;" id="input">
+		<INPUT type="button" onClick="Send_Answer()" value="回答する">
+              </div>
+            </p>
+	  </form>
+          <!-- -->
+	  
+	</div> 
+      </div>
+    </center>	  
+
+  </body>
+</html>

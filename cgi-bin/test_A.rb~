@@ -1,0 +1,17 @@
+#!/root/.rbenv/shims/ruby                                                                                                                                                                    # -*- coding: utf-8 -*-                                                                                                                                                                      
+require 'cgi'
+
+cgi = CGI.new
+header cgi.header( {"charset"=>"UTF-8"} )
+puts header
+
+answer =""
+
+begin
+  File::open("answer.txt", "r") { |f|
+    answer = f.gets
+  }
+  cgi.out{ "#{answer}" }
+rescue
+  cgi.out{ "-1" }
+end

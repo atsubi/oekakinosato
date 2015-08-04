@@ -1,0 +1,6 @@
+<!-- ページを読み込んだら一定時間ごとにcgiプログラムが実行する                  
+     現在のページアクセス数をサーバ側に伝え、結果を表示するサンプル  -->
+<html>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <head>
+    <title>お絵かきの里</title>

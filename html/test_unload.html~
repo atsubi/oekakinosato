@@ -1,0 +1,55 @@
+<!-- ページロードとアンロードのイベントテスト -->
+
+<html>
+  
+  <head>
+    <title>ページロード、アンロードのテスト</title>
+  </head>
+  <script type="text/javascript">
+
+  function Odai() {
+
+     var req = getXHR();
+     var aa = document.getElementById("aa");
+
+     req.onreadystatechange = function() {
+        if( req.readyState == 4 ) {  // 通信完了時
+            if( req.status == 200 ) {   // 通信成功
+                aa.innerHTML = req.responseText;
+            } else {                    // 通信失敗
+                aa.innerHTML = req.status;
+            }
+          } else {
+            question.innerHTML = "通信中・・・";
+          }
+      }
+
+      // サーバとの非同期通信を開始
+      req.open( "GET", "/cgi_bin/odai.rb", true );
+      req.send( null );
+  }
+
+
+  <!-- XMLHttpRequest オブジェクトを取得するためのユーザ定義関数 -->
+  function getXHR() {
+     var req;
+     try {
+           req = new XMLHttpRequest();
+         } catch(e) {
+           try {
+              req = new ActiveXObject("Msxml2.XMLHTTP");
+         } catch(e) {
+              req = new ActiveXObject("Microsoft.XMLHTTP");
+         }
+      }
+         return req;
+   }
+
+
+
+  </script>
+  <body onload="Odai()" >
+    ページロード、アンロードのテスト
+    <div id="aa"></div>
+  </body>
+</html>

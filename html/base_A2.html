@@ -1,0 +1,315 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS">
+    <title>お絵かきの里</title>
+    <style>
+      body{
+        background: url(Pencle2.png);
+        font-family: Meiryo;
+      }
+
+      #titleframe{
+
+      background: #004400;
+      width: 1100px;
+      padding: 30px;
+      text-align: center;
+      margin: auto auto;
+      }
+
+      #title {
+        width: 380px;
+      background: #93FFAB;
+        padding: 5px;
+        text-align: center;
+        margin: 5px auto;
+      zoom: 200%;
+      }
+
+      #question {
+        text-align: center;
+        margin: 0 auto;
+      }
+
+      #center_container {
+        margin: 0 auto;
+      }
+      
+
+      #paint_container_frame{
+
+      width: 1200px;
+      height: 400px;
+      background: #a0522d;
+      padding: 20px 0px; 
+
+      }
+
+      #paint_container {
+        width: 1150px;
+        height: 350px;
+        background: #00ff00;
+        margin: 25px 25px;
+      }
+
+      .paint{
+        float: left;
+
+      }
+
+      #paint_p1 {
+        background: #dddd00;
+          margin: 25px 25px;
+   
+      }
+
+      #paint_p2 {
+        background: #dd00dd;
+          margin: 25px 15px;
+      
+      }
+
+      #paint_p3 {
+        background: #00dddd;
+          margin: 25px 25px;
+
+      }
+
+      #answer_cotainer{
+        background: #ffffff;
+        height: 1000px;
+        width: 1000px;
+      }
+
+      p.answer{zoom: 250%;}
+
+      canvas {
+      width: 320px;
+      height: 270px;
+        margin: 0;
+        border: 3px solid #ccc;
+      }
+
+      paint ul {
+
+      }
+        
+    </style>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script type="text/javascript">
+
+      var my_id = "";     // 自身のプレイヤ番号
+      var answer_id = ""; // 回答者のプレイヤ番号
+      var image_id = 1;
+
+      $(function() {
+         getAnswerNumber(); // 回答者のプレイヤ番号を取り出す。
+         getMyNumber();     // 自身のプレイヤ番号を取り出す。
+      });
+      
+      function getAnswerNumber() {
+
+         var req = getXHR();
+         req.onreadystatechange = function() {
+            if( req.readyState == 4 ) {  // 通信完了時
+                if( req.status == 200 ) {   // 通信成功
+                   answer_id = req.responseText;
+                } else {                    // 通信失敗
+
+                }
+            } else {
+
+            }
+         }
+
+         // サーバとの同期通信を開始
+         req.open( "GET", "/cgi-bin/answer.rb", false );
+         req.send( null );
+
+      }
+
+      
+      <!-- 画像を表示する -->
+      function getImage( num ) {
+         var req = getXHR();
+         req.responseType = "blob"
+
+         <!-- 通信処理 -->
+         req.onreadystatechange = function() {
+            if( req.readyState == 4 ) {
+              if( req.status == 200 ) {
+                 var oURL = URL.createObjectURL(req.response);
+                 var canvas = document.getElementById("mycanvas"+image_id.toString(10));
+                 var context = canvas.getContext("2d");
+                 var img = new Image();
+
+                 // 画像が読み込まれるとcanvasに描画する
+                 img.onload = function() {
+                    try{
+                       context.drawImage(img, 0, 0);
+                    } catch (exp) {
+
+                    }
+                 }
+                 img.src = oURL;
+                 image_id++;
+              } 
+              else {
+
+              }
+            }
+         }
+         req.open("GET", "/cgi-bin/load_image.rb?id=" + num, true);
+         req.send( null );
+      }
+
+
+      <!-- -->
+      function getMyNumber() {
+
+         var req = getXHR();
+         var answer_container = document.getElementById("answer_container");
+         var question = document.getElementById("question");
+
+         req.onreadystatechange = function() {
+
+            if( req.readyState == 4 ) {  // 通信完了時
+                if( req.status == 200 ) {   // 通信成功
+                   my_id = req.responseText;
+                   if ( answer_id == my_id ) { // 回答者
+                      question.innerHTML = "答えを入力して「回答する」ボタンを押してください";
+                   }
+                   else {
+                      answer_container.innerHTML = "";
+	              question.innerHTML = "回答者入力中です．しばらくお待ちください・・";
+                   }
+                   
+                   // 画像を出力する
+                   for ( var i=1; i != 5; i++ ) {
+                      if ( i.toString(10) != answer_id ) {
+                          getImage( i.toString(10) );
+      	              }
+                   }
+
+                } else {                    // 通信失敗
+
+                }
+            } else {
+ 
+            }
+         }
+
+         // サーバとの同期通信を開始
+         req.open("GET","/cgi-bin/player_number.rb", false);
+         req.send(null);
+
+      }
+
+      function getOdai() {
+
+         var req = getXHR();
+         var question = document.getElementById("question");
+
+         req.onreadystatechange = function() {
+
+          if( req.readyState == 4 ) {  // 通信完了時
+              if( req.status == 200 ) {   // 通信成功
+      　　　　　question.innerHTML = req.responseText;
+              } else {                    // 通信失敗
+                question.innerHTML = req.status;
+              }
+          } else {
+            question.innerHTML = "通信中・・・";
+          }
+        }
+        
+        // サーバとの非同期通信を開始
+        req.open( "GET", "/cgi-bin/odai.rb", false );
+        req.send( null );
+
+      }
+
+
+      <!-- XMLHttpRequest オブジェクトを取得するためのユーザ定義関数 -->
+      function getXHR() {
+         var req;
+         try {
+           req = new XMLHttpRequest();
+         } catch(e) {
+           try {
+              req = new ActiveXObject("Msxml2.XMLHTTP");
+           } catch(e) {
+              req = new ActiveXObject("Microsoft.XMLHTTP");
+           }
+         }
+         return req;
+      }
+ 
+      function sendAns() {
+         var xhr=getXHR();
+         xhr.onreadystatechange = function(){
+            switch(xhr.readystate){
+      case 4:
+                var resp=xhr.responseText;
+                Document.answerAREA.Abox.value=resp;
+                break;
+            }
+         };
+         var stext = Document.answerAREA.input.value;
+         var url = "/cgi-bin/ans.rb";
+         xhr.open("GET",url+"?answer="+stext, true);
+         xhr.send(null);
+      }
+
+
+    </script>
+    
+  </head>
+  
+  <body>
+    <center>
+      <div id = "titleframe">
+	<div id = "title">
+      <img id="tree1" src="tree04.gif" width="90px" height="70px" align="left"> 
+      <img id="tree2" src="tree04.gif" width="80px" height="70px" align="right">
+      <h1>お絵かきの里</h1>
+    </div>
+      </div>
+    </center>
+    <h2>
+      <div id="question">
+      </div>
+    </h2>
+    <center>    
+      <div id = "center_container">
+	<div id = "paint_container_frame">
+          <div id = "paint_container">
+	    <div id = "paint_p1" class = "paint" width="320px" height="270px">
+	      <canvas id="mycanvas1">
+	    </div>
+	    <div id = "paint_p2" class = "paint" width="320px" height="270px">
+	      <canvas id="mycanvas2">
+	    </div>
+	    <div id = "paint_p3" class = "paint" width="320px" height="270px">
+	      <canvas id="mycanvas3">
+	    </div>
+	  </div>
+	</div>
+	
+	<div id="answer_container">
+          <form name="answerAREA">
+            <p class=answer>
+	      <INPUT type="text" size=16 style="text-align:center;font-size:xx-large;" id="Abox" disabled="disabled">
+              <br>
+	      <INPUT type="text" size=10 style="font-size:medium;" id="input">
+	      <INPUT type="button" onClick="sendAns()" value="回答する">
+            </p>
+	  </form>
+          <!-- -->
+	  
+	</div> 
+      </div>
+    </center>	  
+  </body>
+</html>

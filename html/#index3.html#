@@ -1,0 +1,87 @@
+<!-- ページを読み込んだら自動でcgiプログラムが実行
+     ページアクセス数をカウントするサンプル  -->
+<html>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <head>
+    <title>アクセスカウンター</title>
+  </head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script type="text/javascript">
+    
+    <!-- ページ読み込み時に実行する -->
+    function init() {
+      alert('hi');
+      var req = getXHR();
+      var result = document.getElementById("result");
+
+      <!-- 通信処理 -->
+      req.onreadystatechange = function() {
+      
+         if( req.readyState == 4 ) {
+             if ( req.status == 200 ) {
+                result.innerHTML = req.responseText;
+             } else {
+                result.innerHTML = req.status;
+             }
+         } else {
+            result.innerHTML = "通信中・・・";
+         }
+      }
+      
+      <!-- request -->
+      req.open("GET", "/cgi-bin/load.rb", true);
+      req.send( null );
+    }
+
+
+    <!-- ページから離れるとき -->
+    function exit() {
+
+      alert('sainara');
+
+      var req = getXHR();
+
+      <!-- 通信処理 -->
+      req.onreadystatechange = function() {
+
+        if( req.readyState == 4 ) {
+           if ( req.status == 200 ) {
+//              result.innerHTML = req.responseText;
+           } else {
+//              result.innerHTML = req.status;
+           }
+        }
+        else {
+//           result.innerHTML = "通信中・・・";
+        }
+      }
+
+      <!-- request -->
+      req.open("GET", "/cgi-bin/unload.rb", true);
+      req.send( null );
+
+    }
+
+
+    function getXHR() {
+      var req;
+      try {
+        req = new XMLHttpRequest();
+      } catch( e ) {
+        try {
+           req = new ActiveXObject("Msxm12.XMLHTTP");
+        } catch( e ) {
+           req = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+
+      }
+      return req;
+    }
+
+    
+  </script>
+  <body onLoad="init()" onunload="exit()">
+    <div id="result"></div>
+  </body>
+</html>
+
