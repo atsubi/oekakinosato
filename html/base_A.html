@@ -140,7 +140,7 @@
       $(function() {
          getAnswerNumber(); // ‰ñ“šÒ‚ÌƒvƒŒƒCƒ„”Ô†‚ğæ‚èo‚·B
          getMyNumber();     // ©g‚ÌƒvƒŒƒCƒ„”Ô†‚ğæ‚èo‚·B
-
+         document.getElementById("vote_function").style.display = "none";
       });
       
       function getAnswerNumber() {
@@ -296,6 +296,7 @@
               if( req.status == 200 ) {   // ’ÊM¬Œ÷
                 if( req.responseText != "" ) {
                    ans_box.value = req.responseText;
+                   document.getElementById("vote_function").style.display = "";
    	           clearInterval( timerID );
                 }
               } else {                    // ’ÊM¸”s
@@ -305,7 +306,11 @@
 
           }
         }
-}
+         
+        req.open( "GET", "/cgi-bin/check_answer_text.rb", false );
+        req.send( null );
+
+      }
 
       function checkvotetext() {
 
@@ -314,33 +319,32 @@
 
           if( vreq.readyState == 4 ) {  // ’ÊMŠ®—¹
               if( vreq.status == 200 ) {   // ’ÊM¬Œ÷
-
                 var vt_number = parseInt(vreq.responseText);
-                if(vt_number==0){vote_area.innerHTML="‘Ò‹@’†";} else {
-                switch(vt_number-30){
-                   case 0:
-                      vote_area.innerHTML = "~~~";
-                      break;
-                   case 1:
-                      vote_area.innerHTML = "›~~";
-                      break;
-                   case 2:
-                      vote_area.innerHTML = "››~";
-                      break;
-                   case 3:
-                      vote_area.innerHTML = "›››";
-                      break;
+                if(vt_number==0) {
+                   vote_area.innerHTML="‘Ò‹@’†";
+                } else {
+                   switch(vt_number-30){
+                     case 0:
+                        vote_area.innerHTML = "~~~";
+                        break;
+                     case 1:
+                        vote_area.innerHTML = "›~~";
+                        break;
+                     case 2:
+                        vote_area.innerHTML = "››~";
+                        break;
+                     case 3:
+                        vote_area.innerHTML = "›››";
+                        break;
                 }
-                clearInterval( timerID2 );
               }
             }
           }
               
         }
-  
-
         
         // ƒT[ƒo‚Æ‚Ì”ñ“¯Šú’ÊM‚ğŠJn
+
         vreq.open( "GET", "/cgi-bin/check_vote_text.rb", false );
         vreq.send( null );
       
@@ -362,7 +366,6 @@
            }
          }
 
-
          var stext = document.answerAREA.input.value;
          var url = "/cgi-bin/ans.rb";
          xhr.open("GET",url+"?answer=" +
@@ -371,35 +374,36 @@
          xhr.send(null);
       }
 
-
-<!-- count‚Å³‰ğ‚È‚ç1, •s³‰ğ‚È‚ç0‚ğæ“¾‚µ‚Ä‚¢‚é -->
+      <!-- count‚Å³‰ğ‚È‚ç1, •s³‰ğ‚È‚ç0‚ğæ“¾‚µ‚Ä‚¢‚é -->
       function vote(count){
-        var vtreq = getXHR();
-        vtreq.onreadystatechange = function(){
-        if(vtreq.readyState==4){
-                var vt_number = parseInt(vtreq.responseText);
-                if(vt_number==0){vote_area.innerHTML="‘Ò‹@’†";} else {
-                switch(vt_number-30){
-                   case 0:
-                      vote_area.innerHTML = "~~~";
-                      break;
-                   case 1:
-                      vote_area.innerHTML = "›~~";
-                      break;
-                   case 2:
-                      vote_area.innerHTML = "››~";
-                      break;
-                   case 3:
-                      vote_area.innerHTML = "›››";
-                      break;
-                }
+         var vtreq = getXHR();
+         vtreq.onreadystatechange = function(){
+            if(vtreq.readyState==4){
+               var vt_number = parseInt(vtreq.responseText);
+               if(vt_number==0) {
+                   vote_area.innerHTML="‘Ò‹@’†";
+               } else {
+                   switch(vt_number-30){
+                     case 0:
+                        vote_area.innerHTML = "~~~";
+                        break;
+                     case 1:
+                        vote_area.innerHTML = "›~~";
+                        break;
+                     case 2:
+                        vote_area.innerHTML = "››~";
+                        break;
+                     case 3:
+                        vote_area.innerHTML = "›››";
+                        break;
+                  }
               }
-             }
             }
-        
-        var url = "/cgi-bin/vote_test.rb";
-        vtreq.open("GET", url+"?ct="+count,true);
-        vtreq.send(null);
+           }
+           document.getElementById("vote_function").style.display = "none";
+           var url = "/cgi-bin/vote_test.rb";
+           vtreq.open("GET", url+"?ct="+count,true);
+           vtreq.send(null);
       }
 
     </script>
